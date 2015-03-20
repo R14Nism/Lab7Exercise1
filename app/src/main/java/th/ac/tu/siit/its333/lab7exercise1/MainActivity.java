@@ -9,7 +9,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,6 +25,8 @@ import java.net.URL;
 
 public class MainActivity extends ActionBarActivity {
 
+    int lastBtn;
+    double timeEnd, timeStart;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,10 +45,65 @@ public class MainActivity extends ActionBarActivity {
         WeatherTask w = new WeatherTask();
         switch (id) {
             case R.id.btBangkok:
-                w.execute("http://ict.siit.tu.ac.th/~cholwich/bangkok.json", "Bangkok Weather");
+
+                if(lastBtn!=R.id.btBangkok && timeEnd-timeStart <= 60000) {
+                    w.execute("http://ict.siit.tu.ac.th/~cholwich/bangkok.json", "Bangkok Weather");
+                    lastBtn = R.id.btBangkok;
+                    timeStart = System.currentTimeMillis();
+
+                }
+
+                else {
+                    Toast t = Toast.makeText(this.getApplicationContext(),
+                            "Please wait 1 minute to click Bangkok",
+                            Toast.LENGTH_SHORT);
+                    t.show();
+
+                }
                 break;
+
+
+            case R.id.btPathum:
+
+                if(lastBtn!=R.id.btPathum && timeEnd-timeStart <= 60000) {
+                    w.execute("http://ict.siit.tu.ac.th/~cholwich/pathumthani.json", "Pathumthani Weather");
+                    lastBtn = R.id.btPathum;
+                    timeStart = System.currentTimeMillis();
+
+                }
+
+                else {
+                    Toast t = Toast.makeText(this.getApplicationContext(),
+                            "Please wait 1 minute to click Phathumthani",
+                            Toast.LENGTH_SHORT);
+                    t.show();
+
+                }
+                break;
+
+
+            case R.id.btNon:
+
+                if(lastBtn!=R.id.btNon && timeEnd-timeStart <= 60000) {
+                    w.execute("http://ict.siit.tu.ac.th/~cholwich/nonthaburi.json", "Nonthaburi Weather");
+                    lastBtn = R.id.btNon;
+                    timeStart = System.currentTimeMillis();
+
+                }
+
+                else {
+                    Toast t = Toast.makeText(this.getApplicationContext(),
+                            "Please wait 1 minute to click Nonthaburi",
+                            Toast.LENGTH_SHORT);
+                    t.show();
+
+                }
+                break;
+
         }
     }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -73,7 +132,8 @@ public class MainActivity extends ActionBarActivity {
         ProgressDialog pDialog;
         String title;
 
-        double windSpeed;
+        double windSpeed, humidity,temp,tempMin,tempMax;
+        String weather;
 
         @Override
         protected void onPreExecute() {
@@ -105,6 +165,16 @@ public class MainActivity extends ActionBarActivity {
                     JSONObject jWeather = new JSONObject(buffer.toString());
                     JSONObject jWind = jWeather.getJSONObject("wind");
                     windSpeed = jWind.getDouble("speed");
+                    JSONObject jMain = jWeather.getJSONObject("main");
+                    humidity = jMain.getDouble("humidity");
+                    temp = jMain.getDouble("temp");
+                    tempMin = jMain.getDouble("temp_min");
+                    tempMax = jMain.getDouble("temp_max");
+                    JSONArray jweather2 = jWeather.getJSONArray("weather");
+                    weather = jweather2.getJSONObject(0).getString("main");
+                    temp = temp - 272.15;
+                    tempMax = tempMax - 272.15;
+                    tempMin = tempMin - 272.15;
                     errorMsg = "";
                     return true;
                 }
@@ -126,7 +196,7 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(Boolean result) {
-            TextView tvTitle, tvWeather, tvWind;
+            TextView tvTitle, tvWeather, tvWind, tvHumid, tvTemp;
             if (pDialog.isShowing()) {
                 pDialog.dismiss();
             }
@@ -134,10 +204,16 @@ public class MainActivity extends ActionBarActivity {
             tvTitle = (TextView)findViewById(R.id.tvTitle);
             tvWeather = (TextView)findViewById(R.id.tvWeather);
             tvWind = (TextView)findViewById(R.id.tvWind);
+            tvHumid = (TextView)findViewById(R.id.tvHumid);
+            tvTemp = (TextView)findViewById(R.id.tvTemp);
+
 
             if (result) {
                 tvTitle.setText(title);
                 tvWind.setText(String.format("%.1f", windSpeed));
+                tvHumid.setText(String.format("%.1f%%", humidity));
+                tvWeather.setText(String.format("%s", weather));
+                tvTemp.setText(String.format("%.1f(max=%.1f,min=%.1f)", temp, tempMin, tempMax));
             }
             else {
                 tvTitle.setText(errorMsg);
